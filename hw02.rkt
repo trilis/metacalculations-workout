@@ -1,5 +1,18 @@
 #lang racket
-(define ns (make-base-namespace))
+(define-namespace-anchor a)
+(define ns (namespace-anchor->namespace a))
+
+(define car-or-zero
+  (lambda (tape)
+    (if (empty? tape)
+        '0
+        (car tape))))
+
+(define cdr-or-empty
+  (lambda (tape)
+    (if (empty? tape)
+        tape
+        (cdr tape))))
 
 (define int
   (lambda (program data)
@@ -36,8 +49,8 @@
     (cont4 (if (equal? Operator 'if) do-if error))
     (error (return (raise 'syntaxerror: Operator)))
     (stop (return Right))
-    (do-right (:= Left (cons '(car Right) Left)) (:= Right (cdr Right)) (goto loop))
-    (do-left (:= Left (cdr Left)) (:= Right (cons '(car Left) Right)) (goto loop))
+    (do-right (:= Left (cons (car-or-zero Right) Left)) (:= Right (cdr-or-empty Right)) (goto loop))
+    (do-left (:= Left (cdr-or-empty Left)) (:= Right (cons (car-or-zero Left) Right)) (goto loop))
     (do-write (:= Symbol (caddr Instruction)) (:= Right (cons Symbol (cdr Right))) (goto loop))
     (do-goto (:= NextLabel (caddr Instruction)) (goto jump))
     (do-if (:= Symbol (caddr Instruction)) (:= NextLabel (list-ref Instruction '4)) (if (equal? Symbol (car Right)) jump loop))
