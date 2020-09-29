@@ -142,6 +142,9 @@
 
 (define tm-example '((0 if 0 goto 3) (1 right) (2 goto 0) (3 write 1)))
 
-(int mix `(,tm-int ,(list 'Q 'Qtail 'Instruction 'Operator 'Symbol 'NextLabel) ,(make-immutable-hash (list (cons 'Q tm-example)))))
+(define fut1 (int mix `(,tm-int ,(list 'Q 'Qtail 'Instruction 'Operator 'Symbol 'NextLabel) ,(make-immutable-hash (list (cons 'Q tm-example))))))
 
-(int (int mix `(,tm-int ,(list 'Q 'Qtail 'Instruction 'Operator 'Symbol 'NextLabel) ,(make-immutable-hash (list (cons 'Q tm-example))))) '((1 1 1 0 1 0 1)))
+(pretty-print-columns 50)
+(pretty-print fut1)
+
+(int fut1 '((1 1 1 0 1 0 1)))
