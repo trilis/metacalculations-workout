@@ -341,6 +341,10 @@ expr_to_str :: Expr -> String
 expr_to_str (Cons "Nil" []) = ""
 expr_to_str (Cons "Cons" [Cons s [], ss]) = s ++ (expr_to_str ss)
 
+expr_to_bool :: Expr -> Bool
+expr_to_bool (Cons "True" []) = True
+expr_to_bool (Cons "False" []) = False
+
 sample_sum :: Expr
 sample_sum = App (App (Fun "sum")
                         (App (Fun "squares")
@@ -413,3 +417,12 @@ str_compare = Lam "s" $ Lam "p" $ Case (Var "p") [
 lib :: [(String, Expr)]
 lib = [("sum", sum'), ("squares", squares), ("upto", upto), ("+", plus), ("*", mult), (">", gt),
        ("m1", m1), ("m2", m2), ("==", str_compare), ("next", next)]
+
+(e_sum, defs_sum) = extract_code $ super_compile (sample_sum, lib)
+(e_match, defs_match) = extract_code $ super_compile (App sample_match (str_to_expr "aba"), lib)
+
+launch_sum :: Int -> Int
+launch_sum n = expr_to_int $ eval ((App e_sum (int_to_expr n)), defs_sum ++ lib)
+
+launch_match :: String -> Bool
+launch_match str = expr_to_bool $ eval ((App e_match (str_to_expr str)), defs_match ++ lib)
