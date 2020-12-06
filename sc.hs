@@ -148,21 +148,24 @@ homeo_embed_d e (Cons _ es) = any (homeo_embed e) es
 homeo_embed_d e (Lam _ e1) = (homeo_embed e e1)
 homeo_embed_d e (App f x) = (homeo_embed e x) || (homeo_embed e f)
 homeo_embed_d e (Case e1 pats) = (homeo_embed e e1) || any (\(_,e2) -> homeo_embed e1 e2) pats
-homeo_embed_d e1 e2 = e1 == e2
+homeo_embed_d e1 e2 = False
 
 coupling_pat :: ((Pattern, Expr), (Pattern, Expr)) -> Bool
 coupling_pat ((Pattern t1 _, e1), (Pattern t2 _, e2)) = t1 == t2 && (homeo_embed e1 e2)
 
 homeo_embed_c :: Expr -> Expr -> Bool
-homeo_embed_c (Var _) (Var _) = True
 homeo_embed_c (Cons a es1) (Cons b es2) = (a == b) && (length es1 == length es2) && (all (\(x,y) -> homeo_embed x y) (zip es1 es2))
-homeo_embed_c (Lam _ e1) (Lam _ e2) = homeo_embed e1 e2
-homeo_embed_c (App f1 x1) (App f2 x2) = (homeo_embed f1 f2) && (homeo_embed x1 x2)
-homeo_embed_c (Case e1 ps1) (Case e2 ps2) = (length ps1 == length ps2) && (homeo_embed e1 e2) && all coupling_pat (zip ps1 ps2)
+homeo_embed_c (Lam _ e1) (Lam _ e2) = homeo_embed_c e1 e2
+homeo_embed_c (App f1 x1) (App f2 x2) = (homeo_embed_c f1 f2) && (homeo_embed x1 x2)
+homeo_embed_c (Case e1 ps1) (Case e2 ps2) = (length ps1 == length ps2) && (homeo_embed_c e1 e2) && all coupling_pat (zip ps1 ps2)
 homeo_embed_c e1 e2 = e1 == e2
 
+homeo_embed_v :: Expr -> Expr -> Bool
+homeo_embed_v (Var _) (Var _) = True
+homeo_embed_v _ _ = False
+
 homeo_embed :: Expr -> Expr -> Bool
-homeo_embed e1 e2 = (homeo_embed_c e1 e2) || (homeo_embed_d e1 e2)
+homeo_embed e1 e2 = (homeo_embed_v e1 e2) || (homeo_embed_c e1 e2) || (homeo_embed_d e1 e2)
 
 generalization_functor_list :: Int -> [(Expr, Expr)] -> (Int, [(Expr, [(Id, Expr)], [(Id, Expr)])])
 generalization_functor_list cnt [] = (cnt, [])
@@ -296,7 +299,7 @@ node_to_expr folds (Node ee@(Case _ ps) ((Simple c1):cs))
   | not (null cs) = let (es, defs) = unzip (map (\(CaseBranch c p) -> node_to_expr_or_def folds c) cs) in
                     let (e1, defs1) = node_to_expr_or_def folds c1 in (Case e1 (zip (map (\(CaseBranch _ p) -> p) cs) es), concat defs ++ defs1)
 node_to_expr folds (Node (Let e1 x e2) (c1:(Simple c2):[])) = let (e, defs) = node_to_expr_or_def folds c2 in (Let e1 x e, defs)
-node_to_expr folds (Node e1 [Fold e2 r]) = let (f, r) = fromJust (lookup e2 folds) in (create_fun_call f (map fst r) (Fun f), [])
+node_to_expr folds (Node e1 [Fold e2 r]) = let (f, _) = fromJust (lookup e2 folds) in (create_fun_call f (map fst r) (Fun f), [])
 node_to_expr folds (Node e [Simple c]) = node_to_expr_or_def folds c
 
 create_body :: Expr -> [Id] -> Expr
