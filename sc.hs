@@ -154,7 +154,7 @@ coupling_pat :: ((Pattern, Expr), (Pattern, Expr)) -> Bool
 coupling_pat ((Pattern t1 _, e1), (Pattern t2 _, e2)) = t1 == t2 && (homeo_embed e1 e2)
 
 homeo_embed_c :: Expr -> Expr -> Bool
-homeo_embed_v (Var _) (Var _) = True
+homeo_embed_c (Var _) (Var _) = True
 homeo_embed_c (Cons a es1) (Cons b es2) = (a == b) && (length es1 == length es2) && (all (\(x,y) -> homeo_embed x y) (zip es1 es2))
 homeo_embed_c (Lam _ e1) (Lam _ e2) = homeo_embed e1 e2
 homeo_embed_c (App f1 x1) (App f2 x2) = (homeo_embed f1 f2) && (homeo_embed x1 x2)
@@ -419,7 +419,7 @@ lib = [("sum", sum'), ("squares", squares), ("upto", upto), ("+", plus), ("*", m
        ("m1", m1), ("m2", m2), ("==", str_compare), ("next", next)]
 
 (e_sum, defs_sum) = extract_code $ super_compile (sample_sum, lib)
-(e_match, defs_match) = extract_code $ super_compile (App sample_match (str_to_expr "aba"), lib)
+(e_match, defs_match) = extract_code $ super_compile (App sample_match (str_to_expr "bba"), lib)
 
 launch_sum :: Int -> Int
 launch_sum n = expr_to_int $ eval ((App e_sum (int_to_expr n)), defs_sum ++ lib)
